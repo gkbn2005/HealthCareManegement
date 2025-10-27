@@ -5,6 +5,7 @@ import com.hms.repository.PatientRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class PatientUIController {
@@ -15,10 +16,15 @@ public class PatientUIController {
         this.repo = repo;
     }
 
-    // ✅ Home Page
+
+
+    // ✅ Home Page (protected)
     @GetMapping("/")
-    public String home() {
-        return "home";
+    public String home(HttpSession session) {
+        if (session.getAttribute("loggedUser") == null) {
+            return "redirect:/login";  // NOT logged in -> login
+        }
+        return "home"; // Logged in -> show home
     }
 
     // ✅ Show Patient List Page
