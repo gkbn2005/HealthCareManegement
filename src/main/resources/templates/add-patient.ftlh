@@ -74,11 +74,6 @@
             </div>
 
             <div class="col-md-6">
-                <label class="form-label">Doctor Assigned</label>
-                <input type="text" name="doctorAssigned" class="form-control" required>
-            </div>
-
-            <div class="col-md-6">
                 <label class="form-label">Email</label>
                 <input type="email" name="email" class="form-control">
             </div>
@@ -86,11 +81,6 @@
             <div class="col-12">
                 <label class="form-label">Address</label>
                 <textarea name="address" class="form-control"></textarea>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Admission Date</label>
-                <input type="date" name="admissionDate" class="form-control" required>
             </div>
 
             <div class="col-12 mt-3">

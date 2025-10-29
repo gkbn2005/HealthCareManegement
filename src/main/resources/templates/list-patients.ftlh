@@ -55,25 +55,40 @@
                     <th>Age</th>
                     <th>Diagnosis</th>
                     <th>Doctor</th>
+                    <th>Admission Date</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <#list patients as p>
-                    <tr>
-                        <td>${p.id}</td>
-                        <td>${p.fullName}</td>
-                        <td>${p.age}</td>
-                        <td>${p.diagnosis}</td>
-                        <td>${p.doctorAssigned}</td>
-                        <td>
-                            <a href="/edit-patient/${p.id}" class="btn btn-warning btn-sm">Edit</a>
-                            <a href="/delete-patient/${p.id}" class="btn btn-danger btn-sm"
-                               onclick="return confirm('Delete this record?')">Delete</a>
-                        </td>
-                    </tr>
+                <tr>
+                    <td>${p.id!}</td>
+                    <td>${p.fullName!}</td>
+                    <td>${p.age!}</td>
+                    <td>${p.diagnosis!}</td>
+                    <td>${p.doctorAssigned!}</td>
+                    <td>
+                        <#if p.admissionDate??>
+                            <#-- If it's a Date/LocalDate -->
+                            <#if p.admissionDate?is_date>
+                                ${p.admissionDate?string("yyyy-MM-dd")}
+                            <#else>
+                                ${p.admissionDate}  <#-- it's already a string -->
+                            </#if>
+                        <#else>
+                            N/A
+                        </#if>
+                    </td>
+
+                    <td>
+                        <a href="/edit-patient/${p.id}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="/delete-patient/${p.id}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Delete this record?')">Delete</a>
+                    </td>
+                </tr>
                 </#list>
                 </tbody>
+
             </table>
         </div>
     </div>

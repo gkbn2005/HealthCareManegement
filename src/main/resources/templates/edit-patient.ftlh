@@ -70,9 +70,16 @@
                 <input type="text" name="diagnosis" value="${patient.diagnosis!}" class="form-control" required>
             </div>
 
+            <!-- Doctor Dropdown -->
             <div class="col-md-6">
                 <label class="form-label">Doctor Assigned</label>
-                <input type="text" name="doctorAssigned" value="${patient.doctorAssigned!}" class="form-control" required>
+                <select name="doctorAssigned" class="form-select" required>
+                    <#list doctors as d>
+                        <option value="${d.username}" <#if patient.doctorAssigned == d.username>selected</#if>>
+                            ${d.fullName} (${d.username})
+                        </option>
+                    </#list>
+                </select>
             </div>
 
             <div class="col-md-6">

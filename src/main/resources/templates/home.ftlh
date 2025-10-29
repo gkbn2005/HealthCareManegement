@@ -39,6 +39,7 @@
 
     <!-- Quick Navigation Cards -->
     <div class="row g-4">
+
         <div class="col-md-4">
             <div class="card card-hover text-center p-3">
                 <div class="card-body">
@@ -59,39 +60,86 @@
             </div>
         </div>
 
+       <#-- Reports (Admin only) -->
+          <#if loggedUser?? && loggedUser.role?lower_case == "admin">
+          <div class="col-md-4">
+              <div class="card card-hover text-center p-3">
+                  <div class="card-body">
+                      <h5 class="card-title">Reports</h5>
+                      <p class="card-text">View and generate reports for hospital activities.</p>
+                      <a href="/reports" class="btn btn-warning">View</a>
+                  </div>
+              </div>
+          </div>
+          </#if>
+
+
+        <!-- Billing (Admin + Receptionist only) -->
+        <#if loggedUser?? && (loggedUser.role?lower_case == "admin" || loggedUser.role?lower_case == "receptionist")>
+
         <div class="col-md-4">
             <div class="card card-hover text-center p-3">
                 <div class="card-body">
-                    <h5 class="card-title">Reports</h5>
-                    <p class="card-text">View and generate reports for hospital activities.</p>
-                    <a href="#" class="btn btn-warning">View</a>
+                    <h5 class="card-title">Billing / Invoices</h5>
+                    <p class="card-text">View, add, and manage patient invoices.</p>
+                    <a href="/billing" class="btn btn-info">Open</a>
                 </div>
             </div>
         </div>
+
+        <div class="col-md-4">
+            <div class="card card-hover text-center p-3">
+                <div class="card-body">
+                    <h5 class="card-title">Add Invoice</h5>
+                    <p class="card-text">Create a new invoice for a patient.</p>
+                    <a href="/add-invoice" class="btn btn-success">Add</a>
+                </div>
+            </div>
+        </div>
+
+        </#if>
+
+        <#-- Appointments (Admin + Doctor only) -->
+        <#if loggedUser?? && (loggedUser.role?lower_case == "admin" || loggedUser.role?lower_case == "doctor")>
+        <div class="col-md-4">
+            <div class="card card-hover text-center p-3">
+                <div class="card-body">
+                    <h5 class="card-title">Appointments</h5>
+                    <p class="card-text">View, add, and manage appointments.</p>
+                    <a href="/appointments" class="btn btn-primary">Open</a>
+                </div>
+            </div>
+        </div>
+        </#if>
+
+
     </div>
 
     <!-- Optional stats section -->
     <div class="row mt-5">
+
         <div class="col-md-6">
             <div class="card p-3">
                 <div class="card-body">
                     <h5 class="card-title">Total Patients</h5>
                     <p class="card-text display-6">
-                        ${patients?size!0} <!-- If patients list is not passed, defaults to 0 -->
+                        ${patients?size}
                     </p>
                 </div>
             </div>
         </div>
+
         <div class="col-md-6">
             <div class="card p-3">
                 <div class="card-body">
-                    <h5 class="card-title">User Role</h5>
+                    <h5 class="card-title">Total Invoices</h5>
                     <p class="card-text display-6">
-                        <#if loggedUser??>${loggedUser.role}<#else>Guest</#if>
+                        ${invoices?size}
                     </p>
                 </div>
             </div>
         </div>
+
     </div>
 
 </body>
