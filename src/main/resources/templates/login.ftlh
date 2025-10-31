@@ -10,11 +10,16 @@
 
 <h2 class="text-center mb-4">🔐 Login</h2>
 
-<div class="card p-4 mx-auto" style="max-width: 400px;">
+<div class="card p-4 mx-auto shadow-sm" style="max-width: 420px; border-radius: 10px;">
 
-    <!-- Error Message (FreeMarker safe) -->
-    <#if error??>
-        <div class="text-danger mb-3">${error}</div>
+    <!-- ✅ Success message (after successful signup) -->
+    <#if infoMessage?? && infoMessage?has_content>
+        <div class="alert alert-success text-center mb-3">${infoMessage}</div>
+    </#if>
+
+    <!-- ❌ Error message -->
+    <#if error?? && error?has_content>
+        <div class="alert alert-danger text-center mb-3">${error}</div>
     </#if>
 
     <form action="/login" method="post">
@@ -28,8 +33,15 @@
             <input type="password" name="password" class="form-control" placeholder="Enter password" required>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <button type="submit" class="btn btn-primary w-100 mt-2">Login</button>
     </form>
+
+    <!-- 🆕 Sign up link -->
+    <div class="text-center mt-3">
+        <p class="mb-0">Don’t have an account?
+            <a href="/signup" class="text-decoration-none fw-bold">Sign up</a>
+        </p>
+    </div>
 </div>
 
 </body>
