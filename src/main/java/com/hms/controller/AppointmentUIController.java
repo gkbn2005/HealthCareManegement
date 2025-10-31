@@ -7,16 +7,19 @@ import com.hms.repository.PatientRepository;
 import com.hms.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;  // Add this import
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 @Controller
 public class AppointmentUIController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AppointmentUIController.class);  // Add this
+    private static final Logger logger = LoggerFactory.getLogger(AppointmentUIController.class);
 
     private final AppointmentRepository appointmentRepo;
     private final PatientRepository patientRepo;
@@ -30,15 +33,19 @@ public class AppointmentUIController {
         this.userRepo = userRepo;
     }
 
-    // List all appointments
+    /** LIST: /appointments */
     @GetMapping("/appointments")
-    public String listAppointments(Model model, HttpSession session) {
+    public String listAppointments(Model model, HttpSession session,
+                                   @ModelAttribute("errorMessage") String errorMessage) {
         model.addAttribute("appointments", appointmentRepo.findAll());
         model.addAttribute("loggedUser", session.getAttribute("loggedUser"));
+        if (errorMessage != null && !errorMessage.isBlank()) {
+            model.addAttribute("errorMessage", errorMessage);
+        }
         return "appointments-list";
     }
 
-    // Add Appointment Page
+    /** ADD (form) */
     @GetMapping("/add-appointment")
     public String addAppointmentPage(Model model, HttpSession session) {
         model.addAttribute("patients", patientRepo.findAll());
@@ -47,7 +54,7 @@ public class AppointmentUIController {
         return "add-appointment";
     }
 
-    // Save Appointment
+    /** ADD (submit) */
     @PostMapping("/add-appointment")
     public String saveAppointment(@ModelAttribute Appointment appt) {
         Patient patient = patientRepo.findById(appt.getPatientId()).orElse(null);
@@ -61,30 +68,20 @@ public class AppointmentUIController {
         return "redirect:/appointments";
     }
 
-    // Edit Appointment Page - UPDATED: Accept String id and parse manually to handle invalid IDs
-    @GetMapping("/edit-appointment/{id}")
-    public String editAppointmentPage(@PathVariable String id, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
-        logger.info("Received ID for edit: '{}'", id);  // Added logging
-
-        Long appointmentId = null;
-        try {
-            appointmentId = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            logger.error("Invalid ID format: '{}'", id);  // Added logging
-            redirectAttributes.addFlashAttribute("errorMessage", "Invalid appointment ID: " + id);
+    /** EDIT (form): /appointments/{id}/edit */
+    @GetMapping("/appointments/{id}/edit")
+    public String editAppointmentPage(@PathVariable Long id,
+                                      Model model,
+                                      HttpSession session,
+                                      RedirectAttributes ra) {
+        if (id == null || id <= 0) {
+            ra.addFlashAttribute("errorMessage", "Appointment ID must be a positive number.");
             return "redirect:/appointments";
         }
 
-        if (appointmentId == null || appointmentId <= 0) {
-            logger.warn("Invalid or null ID: {}", appointmentId);  // Added logging
-            redirectAttributes.addFlashAttribute("errorMessage", "Appointment ID must be a positive number.");
-            return "redirect:/appointments";
-        }
-
-        Appointment appt = appointmentRepo.findById(appointmentId).orElse(null);
+        Appointment appt = appointmentRepo.findById(id).orElse(null);
         if (appt == null) {
-            logger.warn("Appointment not found for ID: {}", appointmentId);  // Added logging
-            redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found.");
+            ra.addFlashAttribute("errorMessage", "Appointment not found.");
             return "redirect:/appointments";
         }
 
@@ -92,79 +89,109 @@ public class AppointmentUIController {
         model.addAttribute("patients", patientRepo.findAll());
         model.addAttribute("doctors", userRepo.findByRoleIgnoreCase("DOCTOR"));
         model.addAttribute("loggedUser", session.getAttribute("loggedUser"));
-        return "edit-appointment";
+        return "edit_appointment"; // src/main/resources/templates/edit_appointment.ftlh
     }
 
-    // Update Appointment — UPDATED: Minor tweak for consistency (already handles null ID)
-    @PostMapping("/edit-appointment")
-    public String updateAppointment(@ModelAttribute Appointment appt, Model model) {
-        // Pre-populate model for re-rendering if needed
+    /** EDIT (submit): POST /appointments/{id}/edit */
+    @PostMapping("/appointments/{id}/edit")
+    public String updateAppointment(@PathVariable Long id,
+                                    @ModelAttribute Appointment form,
+                                    Model model,
+                                    RedirectAttributes ra,
+                                    HttpSession session) {
+        // Preload dropdowns in case of re-render
         model.addAttribute("patients", patientRepo.findAll());
         model.addAttribute("doctors", userRepo.findByRoleIgnoreCase("DOCTOR"));
+        model.addAttribute("loggedUser", session.getAttribute("loggedUser"));
 
-        if (appt.getId() == null || appt.getId() <= 0) {
+        if (id == null || id <= 0) {
             model.addAttribute("errorMessage", "Invalid appointment ID.");
-            return "edit-appointment";
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
         }
 
-        Appointment existing = appointmentRepo.findById(appt.getId()).orElse(null);
+        Appointment existing = appointmentRepo.findById(id).orElse(null);
         if (existing == null) {
             model.addAttribute("errorMessage", "Appointment not found.");
-            return "edit-appointment";
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
         }
 
-        // Validate patient
-        if (appt.getPatientId() == null) {
+        // VALIDATIONS
+        if (form.getPatientId() == null) {
             model.addAttribute("errorMessage", "Patient must be selected.");
-            return "edit-appointment";
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
+        }
+        if (form.getDoctor() == null || form.getDoctor().isBlank()) {
+            model.addAttribute("errorMessage", "Doctor must be selected.");
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
+        }
+        if (form.getDate() == null) {
+            model.addAttribute("errorMessage", "Date is required.");
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
+        }
+        if (form.getTime() == null) {
+            model.addAttribute("errorMessage", "Time is required.");
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
         }
 
-        Patient patient = patientRepo.findById(appt.getPatientId()).orElse(null);
+        // Resolve patient and update related info
+        Patient patient = patientRepo.findById(form.getPatientId()).orElse(null);
         if (patient == null) {
             model.addAttribute("errorMessage", "Selected patient does not exist.");
-            return "edit-appointment";
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
         }
-
-        // Validate doctor
-        if (appt.getDoctor() == null || appt.getDoctor().isBlank()) {
-            model.addAttribute("errorMessage", "Doctor must be selected.");
-            return "edit-appointment";
-        }
-
-        // Validate date/time
-        if (appt.getDate() == null) {
-            model.addAttribute("errorMessage", "Date is required.");
-            return "edit-appointment";
-        }
-        if (appt.getTime() == null) {
-            model.addAttribute("errorMessage", "Time is required.");
-            return "edit-appointment";
-        }
-
-        // Update patient info
-        patient.setAdmissionDate(appt.getDate());
-        patient.setDoctorAssigned(appt.getDoctor());
+        patient.setAdmissionDate(form.getDate());
+        patient.setDoctorAssigned(form.getDoctor());
         patientRepo.save(patient);
 
-        // Update appointment info
-        existing.setPatientId(appt.getPatientId());
-        existing.setPatientName(patient.getFullName());
-        existing.setDoctor(appt.getDoctor());
-        existing.setDate(appt.getDate());
-        existing.setTime(appt.getTime());
-        appointmentRepo.save(existing);
+        // UPDATE the appointment
+        try {
+            existing.setPatientId(form.getPatientId());
+            existing.setPatientName(patient.getFullName());
+            existing.setDoctor(form.getDoctor());
+
+            LocalDate date = form.getDate();
+            LocalTime time = form.getTime();
+            existing.setDate(date);
+            existing.setTime(time);
+
+            appointmentRepo.save(existing);
+        } catch (Exception e) {
+            logger.error("Failed to update appointment {}: {}", id, e.getMessage(), e);
+            model.addAttribute("errorMessage", "Failed to update appointment: " + e.getMessage());
+            model.addAttribute("appointment", form);
+            return "edit_appointment";
+        }
 
         return "redirect:/appointments";
     }
 
-    // Delete Appointment - UNCHANGED (already handles invalid IDs well)
+    /** BACK-COMPAT: redirect /edit-appointment/{id} -> /appointments/{id}/edit */
+    @GetMapping("/edit-appointment/{id}")
+    public String redirectOldEdit(@PathVariable String id) {
+        try {
+            long parsed = Long.parseLong(id);
+            return "redirect:/appointments/" + parsed + "/edit";
+        } catch (NumberFormatException e) {
+            // If it's not a number, just go back to list with a message
+            return "redirect:/appointments";
+        }
+    }
+
+    /** DELETE: unchanged */
     @GetMapping("/delete-appointment/{id}")
     public String deleteAppointment(@PathVariable String id) {
         try {
             Long appointmentId = Long.parseLong(id);
             appointmentRepo.deleteById(appointmentId);
         } catch (NumberFormatException e) {
-            logger.warn("Invalid ID for delete: '{}'", id);  // Added logging
+            logger.warn("Invalid ID for delete: '{}'", id);
         }
         return "redirect:/appointments";
     }
