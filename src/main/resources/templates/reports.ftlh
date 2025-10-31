@@ -6,7 +6,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root{
-      --brand:#0d6efd;          /* Bootstrap primary */
+      --brand:#0d6efd;
       --card-shadow: 0 10px 30px rgba(0,0,0,.08);
       --header-shadow: 0 12px 40px rgba(13,110,253,.18);
     }
@@ -59,18 +59,27 @@
 <body>
 <div class="container">
 
-  <#-- Build a safe query string for the export button -->
-  <#assign qs="">
-  <#if (start??) || (end??)>
-    <#assign parts=[]>
-    <#if start??>
-      <#assign parts = parts + ["start=" + (start?string("yyyy-MM-dd"))]>
-    </#if>
-    <#if end??>
-      <#assign parts = parts + ["end=" + (end?string("yyyy-MM-dd"))]>
-    </#if>
-    <#assign qs = "?" + parts?join("&")>
-  </#if>
+ <#-- Build a safe query string for the export button -->
+ <#assign qs="">
+ <#assign parts=[]>
+
+ <#if start?? && (start?is_date)>
+   <#assign parts = parts + ["start=" + (start?string("yyyy-MM-dd"))]>
+ <#elseif start??>
+   <#assign parts = parts + ["start=" + start]>
+ </#if>
+
+ <#if end?? && (end?is_date)>
+   <#assign parts = parts + ["end=" + (end?string("yyyy-MM-dd"))]>
+ <#elseif end??>
+   <#assign parts = parts + ["end=" + end]>
+ </#if>
+
+ <#if parts?size gt 0>
+   <#assign qs = "?" + parts?join("&")>
+ </#if>
+
+
 
   <!-- Header -->
   <div class="page-head d-flex justify-content-between align-items-center mb-4">
@@ -88,13 +97,11 @@
   <form method="get" action="/reports" class="row g-3 mb-4">
     <div class="col-md-3">
       <label class="form-label">Start date</label>
-      <input type="date" name="start" class="form-control"
-             value="<#if start??>${start?string('yyyy-MM-dd')}</#if>">
+      <input type="date" name="start" class="form-control" value="${start!''}">
     </div>
     <div class="col-md-3">
       <label class="form-label">End date</label>
-      <input type="date" name="end" class="form-control"
-             value="<#if end??>${end?string('yyyy-MM-dd')}</#if>">
+      <input type="date" name="end" class="form-control" value="${end!''}">
     </div>
     <div class="col-md-3 d-flex align-items-end">
       <button class="btn btn-primary btn-rounded px-4">Apply</button>
@@ -165,7 +172,7 @@
       </div>
     </div>
 
-    <!-- New Patients by Day (uses prebuilt list from controller) -->
+    <!-- New Patients by Day -->
     <div class="col-lg-6">
       <div class="section-card">
         <div class="card-header">New Patients (by day, in range)</div>
@@ -206,10 +213,10 @@
             <#else>
               <#list upcoming7 as a>
                 <tr>
-                  <td><#if a.date?is_date>${a.date?string('yyyy-MM-dd')}<#else>${a.date!}</#if></td>
-                  <td><#if a.time?is_date>${a.time?string('HH:mm')}<#else>${a.time!}</#if></td>
-                  <td>${a.patientName!}</td>
-                  <td>${a.doctor!}</td>
+                  <td>${a.date!''}</td>
+                  <td>${a.time!''}</td>
+                  <td>${a.patientName!''}</td>
+                  <td>${a.doctor!''}</td>
                 </tr>
               </#list>
             </#if>

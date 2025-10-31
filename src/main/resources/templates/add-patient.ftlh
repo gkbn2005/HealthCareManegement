@@ -104,7 +104,7 @@
     <p>
       <#if loggedUser??>
         Logged in as <strong>${loggedUser.username}</strong> (<span>${loggedUser.role}</span>)
-        <a href="/logout" class="btn btn-light btn-sm ms-2">Logout</a>
+
       <#else>
         Welcome, Guest
       </#if>

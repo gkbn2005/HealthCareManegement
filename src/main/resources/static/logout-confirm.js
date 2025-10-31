@@ -1,56 +1,64 @@
 // logout-confirm.js
-// Show a confirm dialog for ANY logout attempt across the app.
+// Single, safe, no-double-popup logout confirmation
 
-// Helper: does a URL look like it's going to logout?
-function isLogoutUrl(url) {
-  if (!url) return false;
-  try {
-    // Support absolute, root-relative, and relative URLs
-    const a = document.createElement('a');
-    a.href = url;
-    // Normalize to pathname if possible
-    const path = (a.pathname || url).toLowerCase();
-    return path.endsWith('/logout') || path === 'logout' || path.includes('/logout');
-  } catch (e) {
-    // Fallback: simple includes check
-    return String(url).toLowerCase().includes('logout');
-  }
-}
+if (!window.__logoutConfirmInitialized) {
+  window.__logoutConfirmInitialized = true;
 
-document.addEventListener('click', function (e) {
-  // Match links OR any element you mark with data-logout="true"
-  const el = e.target.closest('a, button, [data-logout]');
-  if (!el) return;
-
-  // Case 1: explicit marker
-  if (el.hasAttribute('data-logout')) {
-    if (!confirm('Are you sure you want to log out?')) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+  function isLogoutUrl(url) {
+    if (!url) return false;
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      const path = (a.pathname || url).toLowerCase();
+      return path.endsWith('/logout') || path === 'logout' || path.includes('/logout');
+    } catch {
+      return String(url).toLowerCase().includes('logout');
     }
-    return;
   }
 
-  // Case 2: anchor with href that points to logout (absolute or relative)
-  if (el.tagName === 'A') {
-    const href = el.getAttribute('href');
-    if (isLogoutUrl(href)) {
-      if (!confirm('Are you sure you want to log out?')) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
+  // Tracks if the user confirmed logout
+  window.__logoutConfirmed = false;
+
+  function confirmLogout(e) {
+    if (window.__logoutConfirmed) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const ok = confirm('Are you sure you want to log out?');
+    if (ok) {
+      window.__logoutConfirmed = true;
+
+      // If it’s a link, navigate manually
+      if (e.target.closest('a')) {
+        window.location.href = e.target.closest('a').href;
+      }
+      // If it’s a form, submit manually
+      else if (e.target.closest('form')) {
+        e.target.closest('form').submit();
       }
     }
   }
-});
 
-// Also catch forms that POST/GET to logout
-document.addEventListener('submit', function (e) {
-  const form = e.target;
-  const action = form && form.getAttribute('action');
-  if (isLogoutUrl(action)) {
-    if (!confirm('Are you sure you want to log out?')) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+  // Handle clicks on logout links or buttons
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('a, button, [data-logout]');
+    if (!el) return;
+
+    // Only trigger confirm for logout actions
+    if (el.hasAttribute('data-logout') || (el.tagName === 'A' && isLogoutUrl(el.href)) ||
+        (el.tagName === 'BUTTON' && el.form && isLogoutUrl(el.form.action))) {
+      confirmLogout(e);
     }
-  }
-});
+  }, true);
+
+  // Handle direct form submissions to logout
+  document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (form && isLogoutUrl(form.action) && !window.__logoutConfirmed) {
+      confirmLogout(e);
+    }
+  }, true);
+
+  console.debug('✅ logout-confirm.js initialized (no double confirm)');
+}

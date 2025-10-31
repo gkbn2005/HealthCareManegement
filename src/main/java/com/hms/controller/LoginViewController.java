@@ -34,14 +34,22 @@ public class LoginViewController {
             return "login";  // stay on login page with error
         }
 
-        // Store user in session for access in all templates
+        // Store user in session
         session.setAttribute("loggedUser", user);
 
-        // Redirect based on role
-        if ("ADMIN".equals(user.getRole())) {
-            return "redirect:/";              // home page
-        } else {
-            return "redirect:/patient-list";  // doctors or other roles
+        // Normalize role (in case DB uses lowercase)
+        String role = user.getRole().trim().toUpperCase();
+
+        // Redirect by role
+        switch (role) {
+            case "ADMIN":
+                return "redirect:/";      // or your admin page
+            case "DOCTOR":
+                return "redirect:/";  // doctor’s appointment list
+            case "RECEPTIONIST":
+                return "redirect:/"; // receptionist home page
+            default:
+                return "redirect:/"; // fallback
         }
     }
 
