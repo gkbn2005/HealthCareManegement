@@ -125,15 +125,19 @@
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card p-3 h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Total Invoices</h5>
-                    <p class="card-text display-6">${invoices?size}</p>
+
+
+        <#if loggedUser?? && (loggedUser.role?lower_case == "admin" || loggedUser.role?lower_case == "receptionist")>
+            <div class="col-md-6">
+                <div class="card p-3 h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Invoices</h5>
+                        <p class="card-text display-6">${invoices?size}</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </#if>
+
 
     <!-- Optional: global logout confirmation script (works on any page that includes it)
          If you create static/logout-confirm.js, it will make ANY <a href="/logout"> show a confirm.

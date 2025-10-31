@@ -15,6 +15,7 @@
 
 <div class="card">
     <div class="card-body">
+
         <#if errorMessage?? && errorMessage?has_content>
             <div class="alert alert-danger mb-3">${errorMessage}</div>
         </#if>

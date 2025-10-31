@@ -38,6 +38,10 @@
 <a href="/appointments" class="btn btn-secondary mb-3">← Back</a>
 
 <div class="card card-hover p-4">
+    <#if errorMessage?? && errorMessage?has_content>
+      <div class="alert alert-danger mb-3">${errorMessage}</div>
+    </#if>
+
     <form action="/add-appointment" method="post" class="row g-3">
 
         <!-- Select Patient -->
