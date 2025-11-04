@@ -40,7 +40,7 @@ Includes patient management, appointment scheduling, and invoicing modules.
 ```bash
 mvn spring-boot:run
 
-✅ Once running, open your browser and go to:
-👉 http://localhost:8080
+Once running, open your browser and go to:
+http://localhost:8080
 
 
